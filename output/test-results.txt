@@ -1,0 +1,20 @@
+test_batch_exit_codes_and_paths_with_spaces (test_traffic.TrafficTests.test_batch_exit_codes_and_paths_with_spaces) ... ok
+test_categories_are_mutually_exclusive (test_traffic.TrafficTests.test_categories_are_mutually_exclusive) ... ok
+test_csv_roundtrip_html_escaping_and_source_label (test_traffic.TrafficTests.test_csv_roundtrip_html_escaping_and_source_label) ... ok
+test_demo_regression_and_conservation (test_traffic.TrafficTests.test_demo_regression_and_conservation) ... ok
+test_import_skips_renamed_demo_and_empty_directory (test_traffic.TrafficTests.test_import_skips_renamed_demo_and_empty_directory) ... ok
+test_invalid_inputs_and_existing_report_preserved (test_traffic.TrafficTests.test_invalid_inputs_and_existing_report_preserved) ... ok
+test_large_timeline_coarsening_preserves_bytes (test_traffic.TrafficTests.test_large_timeline_coarsening_preserves_bytes) ... ok
+test_latest_router_import_end_to_end (test_traffic.TrafficTests.test_latest_router_import_end_to_end) ... ok
+test_nanosecond_pcap_big_endian_and_zero_timestamp (test_traffic.TrafficTests.test_nanosecond_pcap_big_endian_and_zero_timestamp) ... ok
+test_non_ip_time_extends_observation_and_no_division_by_zero (test_traffic.TrafficTests.test_non_ip_time_extends_observation_and_no_division_by_zero) ... ok
+test_pcapng_sections_interfaces_resolutions_offsets (test_traffic.TrafficTests.test_pcapng_sections_interfaces_resolutions_offsets) ... ok
+test_raw_ipv6_and_public_prefix (test_traffic.TrafficTests.test_raw_ipv6_and_public_prefix) ... ok
+test_raw_mixed_ip_and_outer_tunnel_only (test_traffic.TrafficTests.test_raw_mixed_ip_and_outer_tunnel_only) ... ok
+test_truncated_capture_fails_without_report (test_traffic.TrafficTests.test_truncated_capture_fails_without_report) ... ok
+test_untimed_simple_packet_block_disables_rates (test_traffic.TrafficTests.test_untimed_simple_packet_block_disables_rates) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 8.268s
+
+OK

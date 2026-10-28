@@ -1,0 +1,26 @@
+# Wireshark 安装目录：269 MB 第三方二进制，不进仓库
+# 需要时执行 winget install WiresharkFoundation.Wireshark
+/Wireshark/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 本机临时分析输出（示例报告在 reports/ 里保留）
+/output/nolocal*/
+/output/verify_run/
+
+# 浏览器自动化临时产物
+/.playwright-cli/
+
+# 编辑器与系统
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+*.log
+
+# 工具本地工作区
+/.workbuddy-ai/

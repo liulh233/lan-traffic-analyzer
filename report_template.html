@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none';">
+<title>LAN 流量报告</title>
+<style>
+:root{font-family:"Segoe UI","Microsoft YaHei",sans-serif;color:#183343;background:#f3f6f7;font-synthesis:none;--up:#00766b;--down:#a34e00;--muted:#546974}*{box-sizing:border-box}body{margin:0}main{max-width:1320px;margin:auto;padding:32px 28px 50px}h1{font-size:32px;margin:10px 0}h2{font-size:20px;margin:0 0 16px}p{line-height:1.65}small,.muted{color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:.16em;color:#00766b;font-weight:700}.top{display:flex;justify-content:space-between;align-items:center;gap:20px}.badge{border-radius:8px;background:#e5f3ef;color:#075c50;padding:10px 14px;font-weight:600}.demo{background:#fff0ce;color:#7c4300}.warning{padding:12px 18px;border-left:4px solid #c67900;background:#fff6e3;margin:12px 0;line-height:1.7}.meta{overflow-wrap:anywhere}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}.card,.panel{background:#fff;border:1px solid #dce4e8;border-radius:12px;padding:22px}.card .value{font-size:29px;letter-spacing:-.03em;font-weight:650;display:block;margin:10px 0}.card small{font-size:12px}.panel{margin-bottom:20px}.scope{display:flex;gap:16px;flex-wrap:wrap;padding:0;list-style:none}.scope li{padding:8px 12px;background:#f2f6f7;border-radius:6px}.controls{display:flex;gap:16px;flex-wrap:wrap;align-items:end;margin:12px 0}label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#425965}select,input,button{font:inherit;border:1px solid #aebfc8;border-radius:6px;padding:9px 12px;background:white;color:#183343}select{max-width:100%}button{cursor:pointer}button:hover{background:#ecf6f4}input:focus,select:focus,button:focus,a:focus{outline:3px solid #64bdb3;outline-offset:2px}.legend{display:flex;gap:20px;margin:12px 0;font-size:14px}.up{color:var(--up)}.down{color:var(--down)}.up:before,.down:before{content:'';display:inline-block;width:22px;border-top:3px solid;margin-right:6px;vertical-align:middle}.down:before{border-top-style:dashed}.chartbox{width:100%;overflow:hidden}svg{display:block;width:100%;min-height:240px;max-height:390px}.sample{background:#f3f7f8;border-radius:8px;padding:12px 16px;font-variant-numeric:tabular-nums;min-height:46px}.slider{width:100%;padding:0;accent-color:#00766b}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:14px}th,td{padding:12px 10px;border-bottom:1px solid #e4ebee;text-align:right}th{color:#526976;font-size:12px;font-weight:600;background:#f8fafb}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}td button{padding:5px 8px;font-size:12px}.tablebox{overflow-x:auto}.toolbar{justify-content:space-between}.empty{padding:28px;text-align:center;color:#546974}.footer{font-size:13px;color:#546974;line-height:1.8}.downloads{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0}a{color:#006b61;text-underline-offset:3px}details{margin-top:20px;overflow-wrap:anywhere}summary{cursor:pointer;font-weight:600}pre{white-space:pre-wrap;font-size:12px;background:#f1f5f6;padding:15px}#chartTitle{margin-bottom:6px}.table-note{font-size:12px;color:#546974;margin-top:14px}@media(max-width:800px){main{padding:20px 14px}.top{align-items:start;flex-direction:column}.cards{grid-template-columns:repeat(2,1fr)}.card,.panel{padding:16px}.card .value{font-size:24px}.controls label{max-width:100%}h1{font-size:27px}}@media(max-width:420px){.cards{grid-template-columns:1fr}select,input{width:100%}.controls label{width:100%}}
+</style>
+</head>
+<body><main>
+<header class="top"><div><div class="eyebrow">LOCAL NETWORK · TRAFFIC REPORT</div><h1>LAN 流量报告</h1><p class="muted meta" id="captureMeta"></p></div><div class="badge" id="sourceBadge"></div></header>
+<div id="warnings" role="status"></div>
+<section class="cards" aria-label="全部内网地址汇总">
+<div class="card"><span class="muted">公网收发总量</span><strong class="value" id="total"></strong><small id="directionTotal"></small></div>
+<div class="card"><span class="muted">公网平均合计速率</span><strong class="value" id="average"></strong><small>按首末包观测时长计算</small></div>
+<div class="card"><span class="muted">公网窗口合计峰值</span><strong class="value" id="peak"></strong><small id="peakNote"></small></div>
+<div class="card"><span class="muted">观测到的内网地址</span><strong class="value" id="hosts"></strong><small id="packetNote"></small></div>
+</section>
+<section class="panel"><h2>流量范围</h2><ul class="scope" id="scopes"></ul><p class="muted">公网收发仅统计配置的内网地址与公网单播地址之间的数据。内网互传在汇总中每包计一次；广播、组播与其他网段另列。占比表示抓到的公网流量份额，不是宽带利用率。</p></section>
+<section class="panel" aria-labelledby="chartTitle"><h2 id="chartTitle">流量随时间变化</h2>
+<div class="controls"><label>选择设备<select id="device"><option value="*">全部内网地址</option></select></label><label>流量类型<select id="category"><option value="internet">公网收发</option><option value="lan">内网互传</option><option value="other">其他网段</option><option value="service">广播 / 组播等</option></select></label></div>
+<div class="legend"><span class="up" id="upLegend">上行</span><span class="down" id="downLegend">下行</span></div>
+<div class="chartbox"><svg id="chart" viewBox="0 0 1100 330" role="img" aria-label="流量曲线，横轴为相对窗口起点的秒数，纵轴为 Mbps"></svg></div>
+<p class="sample" id="sampleReadout" aria-live="polite"></p><label>查看时间窗口<input type="range" class="slider" id="sample" min="0" max="0" value="0"></label>
+<p class="table-note" id="curveNote"></p></section>
+<section class="panel"><h2>设备流量排行</h2><div class="controls toolbar"><label>查找名称或 IP<input id="search" type="search" placeholder="例如 ljj 或 192.168.110.133"></label><label>排序<select id="sort"><option value="total_bytes">公网总流量</option><option value="up_bytes">公网上传</option><option value="down_bytes">公网下载</option><option value="lan_tx_bytes">内网发送</option></select></label></div>
+<div class="tablebox"><table><thead><tr><th>设备名称</th><th>IP 地址</th><th>公网上行</th><th>公网下行</th><th>公网占比</th><th>内网发送</th><th>内网接收</th><th>曲线</th></tr></thead><tbody id="devices"></tbody></table></div><p class="table-note">名称读取自 devices.json；一个物理设备可能有多个 IP，地址也可能因 DHCP 改变。</p></section>
+<section class="panel"><h2>公网对端 · 流量前 20</h2><div class="tablebox"><table><thead><tr><th>本地设备</th><th>公网对端</th><th>上行</th><th>下行</th><th>合计</th></tr></thead><tbody id="conversations"></tbody></table></div><p class="table-note">仅凭 IP 和流量方向不能判断具体应用。完整对端列表见 CSV。</p></section>
+<footer class="footer"><div class="downloads"><a href="devices.csv" download>设备 CSV</a><a href="timeline.csv" download>时间曲线 CSV</a><a href="conversations.csv" download>对端 CSV</a><a href="report.json" download>完整统计 JSON</a><a href="summary.txt" download>文字摘要</a></div>
+<p>本报告完全离线，不加载外部资源。统计使用最外层 IP 声明长度，包含重传和协议头，不等于文件大小或运营商账单。采集位置由用户声明，工具无法保证覆盖整个 LAN、无丢包或无重复抓包。总量不用于判断宽带是否拥堵。</p>
+<details><summary>数据来源与统计说明</summary><pre id="provenance"></pre><p>时间曲线为固定宽度窗口，边缘不足一窗也按完整窗口计算，不将其放大为瞬时峰值。未观测到数据的中间窗口显示为 0，不能据此排除抓包丢失。timeline.csv 为稀疏数据：缺失窗口为 0，ip=* 表示汇总；汇总的 lan_tx_bytes 为内网互传单次计数，lan_rx_bytes 为 0。JSON 保存窗口起点、窗口数量、实际宽度与全部地址数据。</p></details></footer>
+<noscript>请启用 JavaScript 查看交互曲线，或打开同目录 summary.txt / devices.csv 查看数据。</noscript>
+</main>
+<script type="application/json" id="data">__REPORT_DATA__</script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('data').textContent),s=data.summary,t=data.timeline;
+const $=id=>document.getElementById(id),put=(id,text)=>$(id).textContent=text;
+const bytes=n=>{let i=0;const units=['B','KiB','MiB','GiB','TiB'];while(n>=1024&&i<4){n/=1024;i++}return n.toLocaleString('zh-CN',{maximumFractionDigits:2})+' '+units[i]};
+const rate=n=>n==null?'不可用':n.toFixed(3)+' Mbps';
+const localTime=iso=>iso?new Date(iso).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false}):'无时间戳';
+put('captureMeta',data.source.filename+' · '+localTime(s.start)+' — '+localTime(s.end)+'（北京时间）');
+put('sourceBadge',data.source.label);if(data.source.kind==='demo')$('sourceBadge').classList.add('demo');
+for(const warning of data.warnings){const el=document.createElement('div');el.className='warning';el.textContent=warning;$('warnings').append(el)}
+put('total',bytes(s.total_bytes));put('directionTotal','上传 '+bytes(s.up_bytes)+' / 下载 '+bytes(s.down_bytes));put('average',rate(s.average_mbps));put('peak',rate(s.peak_mbps));put('peakNote',t.interval_seconds+' 秒固定窗口，非瞬时速率');put('hosts',s.device_count+' 个');put('packetNote',s.captured_packets.toLocaleString('zh-CN')+' 个包 · '+(s.duration_seconds==null?'时长不可用':s.duration_seconds.toFixed(3)+' 秒'));
+for(const [label,value] of [['内网互传',s.lan_bytes],['其他网段',s.other_bytes],['广播 / 组播等',s.service_bytes],['未归属',s.unassigned_bytes]]){const li=document.createElement('li');li.textContent=label+' '+bytes(value);$('scopes').append(li)}
+for(const host of data.devices){const option=document.createElement('option');option.value=host.ip;option.textContent=(host.name||'未命名')+' · '+host.ip;$('device').append(option)}
+put('provenance',JSON.stringify({文件:data.source.filename,SHA256:data.source.sha256,来源:data.source.label,内网网段:data.networks,接口筛选:data.source.interface_filter,生成时间:data.generated_at,包数:s.captured_packets,IPv4包数:s.ipv4_packets,IPv6包数:s.ipv6_packets,非IP或未解码包:s.non_ip_packets,无效IP包:s.invalid_ip_packets,截短包:s.truncated_packets,无时间戳包:s.untimed_packets,统计IP字节:s.ip_bytes,未归属字节:s.unassigned_bytes},null,2));
+const NS='http://www.w3.org/2000/svg';function svg(tag,attrs,text){const e=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs||{}))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e}
+let points=[],labels=[],single=false,cursor;
+function readout(index){if(!t.count)return;index=Math.max(0,Math.min(points.length-1,index));$('sample').value=index;const [a,b]=points[index];const stamp=new Date(new Date(t.start).getTime()+index*t.interval_seconds*1000);put('sampleReadout',stamp.toLocaleTimeString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false})+' · 第 '+Number((index*t.interval_seconds).toFixed(3))+'–'+Number(((index+1)*t.interval_seconds).toFixed(3))+' 秒：'+labels[0]+' '+rate(a)+(single?'':' · '+labels[1]+' '+rate(b)));if(cursor){const x=68+(index+.5)/points.length*($('chart').viewBox.baseVal.width-92);cursor.setAttribute('x1',x);cursor.setAttribute('x2',x)}}
+function renderChart(){const host=$('device').value,category=$('category').value;single=category==='service'||(category==='lan'&&host==='*');let indices;
+if(category==='internet'){indices=[0,1];labels=['上行','下行']}else if(category==='lan'){indices=[2,3];labels=host==='*'?['内网互传（每包一次）','']:['内网发送','内网接收']}else if(category==='other'){indices=[4,5];labels=['其他网段发送','其他网段接收']}else{indices=[6,6];labels=['广播 / 组播等','']}
+put('upLegend',labels[0]);put('downLegend',labels[1]);$('downLegend').hidden=single;const chart=$('chart');chart.replaceChildren();$('sample').disabled=!t.count;
+if(!t.count){chart.append(svg('text',{x:80,y:120,fill:'#546974'},'时间戳不足，不能生成可靠的速率曲线。'));put('sampleReadout','字节统计仍可在下方查看。');return}
+const map=new Map((t.series[host]||[]).map(point=>[point[0],point.slice(1)]));points=Array.from({length:t.count},(_,i)=>{const v=map.get(i)||[0,0,0,0,0,0,0];return [v[indices[0]]*8/t.interval_seconds/1e6,single?0:v[indices[1]]*8/t.interval_seconds/1e6]});
+const width=Math.max(300,chart.getBoundingClientRect().width||1100);chart.setAttribute('viewBox','0 0 '+width+' 330');const max=Math.max(.001,...points.flat())*1.15,plotW=width-92,plotH=240,left=68,top=30;
+for(let i=0;i<=4;i++){const y=top+i*plotH/4;chart.append(svg('line',{x1:left,x2:left+plotW,y1:y,y2:y,stroke:'#dce5e9'}));chart.append(svg('text',{x:left-9,y:y+4,'text-anchor':'end',fill:'#546974','font-size':12},(max*(1-i/4)).toFixed(max<.01?4:3)))}
+chart.append(svg('text',{x:15,y:15,fill:'#546974','font-size':12},'Mbps'));
+for(let i=0;i<=4;i++){const x=left+i*plotW/4;chart.append(svg('text',{x,y:294,'text-anchor':'middle',fill:'#546974','font-size':12},(t.count*t.interval_seconds*i/4).toFixed(1)+' s'))}
+for(let line=0;line<(single?1:2);line++){const coords=[];points.forEach((p,i)=>{const y=top+plotH-p[line]/max*plotH;coords.push((left+i/points.length*plotW)+','+y,(left+(i+1)/points.length*plotW)+','+y)});chart.append(svg('polyline',{points:coords.join(' '),fill:'none',stroke:line?'#a34e00':'#00766b','stroke-width':2.2,'stroke-dasharray':line?'6 4':'none'}))}
+cursor=svg('line',{x1:68,x2:68,y1:top,y2:top+plotH,stroke:'#536c79','stroke-dasharray':'3 4'});chart.append(cursor);$('sample').max=points.length-1;readout(Math.min(Number($('sample').value),points.length-1));put('curveNote','窗口起点：'+localTime(t.start)+'（北京时间）；每个窗口 '+t.interval_seconds+' 秒。实线和虚线区分方向，可移动指针或拖动下方滑块查看数值。');
+chart.onpointermove=event=>{const bounds=chart.getBoundingClientRect(),x=(event.clientX-bounds.left)/bounds.width*width;readout(Math.floor((x-left)/plotW*points.length))};
+}
+$('device').onchange=renderChart;$('category').onchange=renderChart;$('sample').oninput=()=>readout(Number($('sample').value));
+function row(cells){const tr=document.createElement('tr');for(const value of cells){const td=document.createElement('td');if(value instanceof Node)td.append(value);else td.textContent=value;tr.append(td)}return tr}
+function renderDevices(){const q=$('search').value.toLowerCase(),sort=$('sort').value;const filtered=data.devices.filter(d=>(d.ip+' '+d.name).toLowerCase().includes(q)).sort((a,b)=>b[sort]-a[sort]);$('devices').replaceChildren();for(const d of filtered){const button=document.createElement('button');button.textContent='看曲线';button.setAttribute('aria-label','查看 '+(d.name||d.ip)+' 的流量曲线');button.onclick=()=>{$('device').value=d.ip;renderChart();$('chartTitle').scrollIntoView({behavior:'smooth'})};$('devices').append(row([d.name||'未命名',d.ip,bytes(d.up_bytes),bytes(d.down_bytes),d.share_percent.toFixed(2)+'%',bytes(d.lan_tx_bytes),bytes(d.lan_rx_bytes),button]))}if(!filtered.length){const tr=row(['没有匹配的内网地址']);tr.firstChild.colSpan=8;tr.className='empty';$('devices').append(tr)}}
+$('search').oninput=renderDevices;$('sort').onchange=renderDevices;
+for(const d of data.conversations.slice(0,20))$('conversations').append(row([(d.name?d.name+' · ':'')+d.local_ip,d.remote_ip,bytes(d.up_bytes),bytes(d.down_bytes),bytes(d.total_bytes)]));if(!data.conversations.length){const tr=row(['没有可归属的公网对端']);tr.firstChild.colSpan=5;$('conversations').append(tr)}
+window.addEventListener('resize',renderChart);renderChart();renderDevices();
+</script></body></html>

@@ -1,0 +1,8 @@
+{
+  "networks": ["192.168.110.0/24"],
+  "networks6": [],
+  "source": "router-lan",
+  "capture_dir": "captures",
+  "report_dir": "reports",
+  "interval_seconds": 1
+}
