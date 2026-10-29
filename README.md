@@ -47,6 +47,23 @@ winget install --id WiresharkFoundation.Wireshark --location "D:\auto_ai\tsshark
 
 ## 配置 LAN 网段
 
+如果管理页没有抓包功能，也可以先用本机 WLAN 取得真实数据。它只用于分析本机可见流量，不能给全 LAN 的其他设备做完整排行。下列命令自动找到 WLAN 网卡，采集 60 秒（文件达到约 100 MB 时提前停止），并以 `host` 来源生成报告：
+
+```powershell
+$toolRoot = 'D:\auto_ai\tsshark tool'
+$wlanAdapter = Get-NetAdapter -Name 'WLAN'
+$captureInterface = '\Device\NPF_' + ([guid]$wlanAdapter.InterfaceGuid).ToString('B')
+$captureDirectory = Join-Path $toolRoot 'captures\host'
+New-Item -ItemType Directory -Path $captureDirectory -Force | Out-Null
+$captureFile = Join-Path $captureDirectory ('host_wlan_' + (Get-Date -Format 'yyyyMMdd_HHmmss_fff') + '.pcapng')
+& "$toolRoot\Wireshark\dumpcap.exe" -i $captureInterface -p -a duration:60 -a filesize:100000 -q -w $captureFile
+if ($LASTEXITCODE -eq 0) {
+    & "$toolRoot\analyze.bat" $captureFile --source host --open
+}
+```
+
+文件保存在 `captures/host` 子目录；自动选择路由器抓包时不会选中它。统计范围与普通 WLAN 抓包限制参见 [Wireshark WLAN 捕获说明](https://wiki.wireshark.org/CaptureSetup/WLAN)。
+
 编辑 `analysis_config.json`：
 
 ```json
@@ -89,6 +106,40 @@ winget install --id WiresharkFoundation.Wireshark --location "D:\auto_ai\tsshark
 | `summary.txt` | 终端摘要的 UTF-8 文本副本 |
 
 报告顶部的平均值与峰值是所有内网地址的**公网收发合计**；切换设备只改变下方曲线。设备名称来自 `devices.json`。IPv4 与 IPv6 地址暂不自动合并为同一物理设备。
+
+## 查局域网有几台设备
+
+抓包抓不到别人的流量——WPA2/WPA3 给每个客户端独立的加密密钥，网卡又工作在 managed 模式，别人的单播帧根本不会交给系统。能看到的只有自己的流量和广播/组播（ARP、mDNS、DHCP、IGMP）。
+
+所以想知道设备数量，得主动探测：
+
+```powershell
+.\scan.bat                          # 用 analysis_config.json 里的网段
+.\scan.bat -n 192.168.110.0/24      # 指定网段
+.\scan.bat --no-ping                # 不扫描，只读现有 ARP 表
+.\scan.bat --json out.json          # 导出 JSON
+```
+
+原理是 ping 扫全网段 → 读系统 ARP 表 → 用 Wireshark 内置的 OUI 库反查厂商：
+
+```
+网段      : 192.168.110.0/24
+扫描地址  : 254 个
+在线设备  : 8 台
+本机      : 192.168.110.241（自己的地址不会出现在自己的 ARP 表里）
+
+IP              名称        MAC               类型      厂商
+------------------------------------------------------------------------------------
+192.168.110.1             48-81-d4-5a-b8-82 固定      Ruijie Networks Co.,LTD
+192.168.110.40            e6-85-31-98-f3-68 随机      随机地址
+192.168.110.134           c0-a4-cf-53-fb-1c 固定      Nintendo Co.,Ltd
+192.168.110.211 ljj电脑     fc-22-1c-20-35-13 固定      Shenzhen Xunman Technology Co., Ltd.
+```
+
+- **ping 不通不代表不在线**。ARP 解析发生在 ICMP 之前，设备只要回 ARP 就会进表，所以防火墙拦 ICMP 的手机照样能查到。
+- **随机 MAC** 是手机的私有 WiFi 地址（首字节本地管理位为 1），查不到厂商，只能看到它在。
+- **关机、休眠、离线的设备不会出现**。要完整清单（含历史租约），看路由器 DHCP 客户端列表。
+- 扫描会给全网段发 ICMP，属于主动探测。别人的网络别乱扫。
 
 ## 统计口径
 
