@@ -13,10 +13,11 @@ venv/
 /output/verify_run/
 
 # 真实抓包：含内网地址、设备名、甚至路由器会话凭据，不进仓库
-/captures/*.pcap
-/captures/*.pcapng
+/captures/*.pcap*
 /captures/*.cap
-/reports/host_live_*/
+/captures/**/*.pcap*
+/captures/**/*.cap
+/reports/*/
 
 # 浏览器自动化临时产物
 /.playwright-cli/
